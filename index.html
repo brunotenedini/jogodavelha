@@ -1,0 +1,246 @@
+<html>
+
+<head>
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Itim&display=swap" rel="stylesheet">
+</head>
+
+<style>
+    * {
+        padding: 0;
+        margin: 0;
+        font-family: 'Itim', cursive;
+    }
+
+    .background {
+        background-color: #12181B;
+        height: 100vh;
+        padding-top: 1px;
+    }
+
+    .title {
+        color: white;
+        text-align: center;
+        font-size: 40px;
+        margin-top: 10px;
+    }
+
+    .display {
+        color: white;
+        font-size: 25px;
+        text-align: center;
+        margin-top: 1em;
+        margin-bottom: 1em;
+    }
+
+    .hide {
+        display: none;
+    }
+
+    .container {
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: 33% 33% 33%;
+        grid-template-rows: 33% 33% 33%;
+        max-width: 300px;
+    }
+
+    .tile {
+        border: 1px solid white;
+        min-width: 100px;
+        min-height: 100px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 50px;
+        cursor: pointer;
+    }
+
+    .playerX {
+        color: #09C372;
+    }
+
+    .playerO {
+        color: #498AFB;
+    }
+
+    .controls {
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        margin-top: 1em;
+    }
+
+    .controls button {
+        color: white;
+        padding: 8px;
+        border-radius: 8px;
+        border: none;
+        font-size: 20px;
+        margin-left: 1em;
+        cursor: pointer;
+    }
+
+    .restart {
+        background-color: #498AFB;
+    }
+
+    #reset {
+        background-color: #FF3860;
+    }
+</style>
+
+<body>
+    <main class="background">
+        <section class="title">
+            <h1>Jogo da Velha</h1>
+        </section>
+        <section class="display">
+            Jogador da vez é <span class="display-player playerX">X</span>
+        </section>
+        <section class="container">
+            <div class="tile"></div>
+            <div class="tile"></div>
+            <div class="tile"></div>
+            <div class="tile"></div>
+            <div class="tile"></div>
+            <div class="tile"></div>
+            <div class="tile"></div>
+            <div class="tile"></div>
+            <div class="tile"></div>
+        </section>
+        <section class="controls">
+            <button id="reset">Reiniciar Jogo</button>
+        </section>
+        <section class="display announcer hide"></section>
+    </main>
+</body>
+
+<script>
+    let jogoAtivo = true;
+    // Chamamos de var global string, varias funcoes usam ela de forma global.
+    let jogadorDaVez = "X";
+    /* Chamamos de array de char, representa o tabuleiro [0, 1, 2, 3, 4, 5, 6, 7, 8], uma lista.
+                                                                [0] [1] [2]
+                                                                [3] [4] [5]
+                                                                [6] [7] [8]
+    */
+    let tabuleiro = ['', '', '', '', '', '', '', '', ''];
+    // Chamamos var global de vetor bidimensional de int, a mesma coisa que um array com outro array [][], uma lista de lista.
+    const vencedorCondicoes = [
+        [0, 1, 2], // na horizontal 1 coluna
+        [3, 4, 5], // na horizontal 2 coluna
+        [6, 7, 8], // na horizontal 3 coluna
+        [0, 3, 6], // na vertical 1 coluna
+        [1, 4, 7], // na vertical 2 coluna
+        [2, 5, 8], // na vertical 3 coluna
+        [0, 4, 8], // na diagonal inciando em 0
+        [2, 4, 6] // na diagonal iniciando em 2
+    ];
+
+    const tela = {
+        sectionAnuncio: document.querySelector('.announcer'),
+        sectionJogador: document.querySelector('.display-player'),
+        sectionTabuleiroPosicoes: Array.from(document.querySelectorAll('.tile')),
+        buttonReiniciarJogo: document.querySelector('#reset'),
+    }
+
+    const posicaoJaPossuiJogada = posicaoTabuleiro => posicaoTabuleiro.innerText === 'X' || posicaoTabuleiro.innerText === 'O';
+
+    const atualizarTabuleiro = posicaoTabuleiro => tabuleiro[posicaoTabuleiro] = jogadorDaVez;
+
+    const mudarJogadorDaVez = () => {
+        tela.sectionJogador.classList.remove(`player${jogadorDaVez}`);
+        jogadorDaVez = jogadorDaVez === 'X' ? 'O' : 'X';
+        tela.sectionJogador.innerText = jogadorDaVez;
+        tela.sectionJogador.classList.add(`player${jogadorDaVez}`);
+    }
+
+    const anunciarResultado = (resultado) => {
+        switch (resultado) {
+            case "X":
+            case "O":
+                tela.sectionAnuncio.innerHTML = 'Jogador - <span class="player' + resultado + '">' + resultado + '</span> VENCEU!';
+                break;
+            case "":
+                tela.sectionAnuncio.innerText = "Empatou, tente novamente!";
+                break;
+            default:
+                window.alert("Resultado invalido p/ " + resultado + "!");
+        }
+
+        tela.sectionAnuncio.classList.remove('hide');
+    };
+
+    const validarVencedorEAnunciar = () => {
+        let encontrouVencedor = false;
+
+        for (let i = 0; i <= 7; i++) {
+            const condicaoVencedora = vencedorCondicoes[i];
+            const a = tabuleiro[condicaoVencedora[0]];
+            const b = tabuleiro[condicaoVencedora[1]];
+            const c = tabuleiro[condicaoVencedora[2]];
+
+            if (a === "" || b === "" || c === "") {
+                continue;
+            }
+
+            if (a === b && b === c) {
+                encontrouVencedor = true;
+                break;
+            }
+        }
+
+        if (encontrouVencedor) {
+            anunciarResultado(jogadorDaVez);
+            jogoAtivo = false;
+            return;
+        }
+
+        if (!tabuleiro.includes("")) {
+            anunciarResultado("");
+        }
+    };
+
+    const reiniciarJogo = () => {
+        tabuleiro = ['', '', '', '', '', '', '', '', ''];
+        jogoAtivo = true;
+        tela.sectionAnuncio.classList.add('hide');
+
+        if (jogadorDaVez === 'O') {
+            mudarJogadorDaVez();
+        }
+
+        tela.sectionTabuleiroPosicoes.forEach(posicao => {
+            posicao.innerText = '';
+            posicao.classList.remove('playerX');
+            posicao.classList.remove('playerO');
+        });
+    }
+
+    const jogarComJogadorDaVez = (telaPosicaoTabuleiroEscolhida, posicaoTabuleiroEscolhida) => {
+        if (!jogoAtivo) {
+            window.alert("O jogo está inativo!");
+            return;
+        }
+
+        if (posicaoJaPossuiJogada(telaPosicaoTabuleiroEscolhida)) {
+            window.alert("Ops, já possui uma jogada aqui!")
+            return;
+        }
+
+        telaPosicaoTabuleiroEscolhida.innerText = jogadorDaVez;
+        telaPosicaoTabuleiroEscolhida.classList.add(`player${jogadorDaVez}`);
+
+        atualizarTabuleiro(posicaoTabuleiroEscolhida);
+        validarVencedorEAnunciar();
+        mudarJogadorDaVez();
+        return;
+    };
+
+    tela.sectionTabuleiroPosicoes.forEach((posicao, indice) => posicao.addEventListener("click", () => jogarComJogadorDaVez(posicao, indice)));
+    tela.buttonReiniciarJogo.addEventListener("click", reiniciarJogo);
+</script>
+
+</html>
